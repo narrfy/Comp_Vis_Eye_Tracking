@@ -8,7 +8,7 @@ Created on Tue Apr 22 18:02:28 2025
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-
+import heapq
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
@@ -32,16 +32,22 @@ while True:
         roi_color = frame[y:y+h, x:x+w]
         # detect eyes in colored face reigon
         eyes = eye_cascade.detectMultiScale(roi_gray)
-        
-        for (ex,ey,ew,eh) in eyes:
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                            # gets 2 rows in eyes (limit to only two eyes)
+        for (ex,ey,ew,eh) in eyes[:2]:
+            
             # draw rectange around eye detection area
             cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
+            
             
             # get center of eyes at detected (x + w/2, y + h/2)
             e_center = (int(ex + ew/2), int(ey + eh/2))
             
             # draw circle around eye
-            eye_circle = cv2.circle(roi_color,e_center,15,(0,255,0),2)
+            #eye_circle = cv2.circle(roi_color,e_center,15,(0,255,0),2)
+            
+            # draw circle at center of eye
+            eye_circle = cv2.circle(roi_color,e_center,10,(0,255,0),2)
             
             # get reigons of interest again
             eye_roi_gray = roi_gray[ey:ey+eh, ex:ex+ew]
@@ -54,7 +60,7 @@ while True:
             contours, _ = cv2.findContours(eye_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             
             # sort high->low if needed
-            #contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+            contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
             
             if len(contours) > 0:
                 # get best guess for where we think the pupil is
@@ -64,12 +70,14 @@ while True:
                 
                 # place dot where pupil is
                 p_center = (int(x1 + w1/2), int(y1 + h1/2))
-                cv2.circle(eye_roi_color, p_center, 3, (255, 0, 0),-1)
+                
+                cv2.circle(eye_roi_color, p_center, 3, (0, 0, 255),-1)
                 
                 
                 # draw a line from center to center to visualize direction...
                 # not really so great right now, probably need to compare to p_center to something else
-                cv2.line(frame, e_center, p_center, (0, 255, 0), 2)  
+                print('e center: ' + str(e_center))
+                print('p center: ' + str(p_center))
                 cv2.line(frame, e_center, p_center, (0, 255, 0), 2)
             
             '''
