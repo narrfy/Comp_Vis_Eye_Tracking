@@ -2,16 +2,25 @@
 """
 Created on Tue Apr 22 18:02:28 2025
 
-@author: jacob
+@author: jacob, nate
 """
 
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import heapq
+from tkinter import*
+
+
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+
+main = Tk()
+canvas = Canvas(main, width = 600, height = 600)
+canvas.pack()
+
+userPoint = canvas.create_rectangle(500,500,550,550,fill="black")
 
 
 cap = cv2.VideoCapture(0)
@@ -62,6 +71,7 @@ while True:
             # sort high->low if needed
             contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
             
+            
             if len(contours) > 0:
                 # get best guess for where we think the pupil is
                 pupil = max(contours, key=cv2.contourArea)
@@ -76,21 +86,35 @@ while True:
                 
                 # draw a line from center to center to visualize direction...
                 # not really so great right now, probably need to compare to p_center to something else
-                print('e center: ' + str(e_center))
-                print('p center: ' + str(p_center))
+                #print('e center: ' + str(e_center))
+                #print('p center: ' + str(p_center))
+                
+                
+                # Range between 60 - 150
+                ex = int(e_center[0] / 90)
+                
+                # Range between 80 - 110
+                ey = int(e_center[1] / 30)
+                
+                # Range between 20-40
+                px = int(p_center[0] / 20)
+                
+                # Range between 20-30
+                py = int(p_center[1] / 10)
+                
+                # Directions the eye is looking
+                pDir = ((px-ex),(py-ey))        
+                print(pDir)
+                
                 cv2.line(frame, e_center, p_center, (0, 255, 0), 2)
             
-            '''
-            ex = e_center[0]
-            ey = e_center[1]
+                if pDir
+                
             
-            px = p_center[0]
-            py = p_center[1]
+            #rel = ((ex-px),(ey-py))
             
-            rel = ((ex-px),(ey-py))
+            #print(rel)
             
-            print(rel)
-            '''
                 
     
     
