@@ -9,7 +9,8 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import heapq
-from tkinter import*
+from tkinter import *
+from threading import *
 
 
 
@@ -20,12 +21,17 @@ main = Tk()
 canvas = Canvas(main, width = 600, height = 600)
 canvas.pack()
 
-userPoint = canvas.create_rectangle(500,500,550,550,fill="black")
+userX = 500
+userY = 500
+
+canvas.create_rectangle(userX,userY,userX+50,userY+50,fill="black")
 
 
 cap = cv2.VideoCapture(0)
 
-while True:
+def update():
+    global userX
+    global userY
     ret, frame = cap.read()
     
     # get grayscale frame from capture
@@ -108,19 +114,31 @@ while True:
                 
                 cv2.line(frame, e_center, p_center, (0, 255, 0), 2)
             
-                if pDir
+                if pDir[0] <= 0:
+                    userX -= 1
+                elif pDir[0] >= 0:
+                    userX += 1
+                    
+                if pDir[1] <= 0:
+                    userY -= 1
+                elif pDir[1] >= 0:
+                    userY += 1
+                
+                canvas.create_rectangle(userX,userY,userX+50,userY+50,fill="black")
                 
             
             #rel = ((ex-px),(ey-py))
             
             #print(rel)
             
-                
-    
-    
+            
     cv2.imshow('Eye Tracking', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        main.destroy()
+        return
+    main.after(10, update)
     
+update()
+main.mainloop()
 cap.release()
 cv2.destroyAllWindows()
