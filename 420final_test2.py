@@ -21,8 +21,8 @@ main = Tk()
 canvas = Canvas(main, width = 600, height = 600)
 canvas.pack()
 
-userX = 500
-userY = 500
+userX = 325
+userY = 325
 
 canvas.create_rectangle(userX,userY,userX+50,userY+50,fill="black")
 
@@ -115,14 +115,14 @@ def update():
                 cv2.line(frame, e_center, p_center, (0, 255, 0), 2)
             
                 if pDir[0] <= 0:
-                    userX -= 1
+                    userX -= 2
                 elif pDir[0] >= 0:
-                    userX += 1
+                    userX += 2
                     
                 if pDir[1] <= 0:
-                    userY -= 1
+                    userY -= 2
                 elif pDir[1] >= 0:
-                    userY += 1
+                    userY += 2
                 
                 canvas.create_rectangle(userX,userY,userX+50,userY+50,fill="black")
                 
