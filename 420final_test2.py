@@ -17,6 +17,9 @@ from threading import *
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
+colors = ["black", "red", "green", "blue"]
+currentColor = 0
+
 main = Tk()
 canvas = Canvas(main, width = 600, height = 600)
 canvas.pack()
@@ -26,12 +29,15 @@ userY = 325
 
 canvas.create_rectangle(userX,userY,userX+50,userY+50,fill="black")
 
+updateDirection = 60
 
 cap = cv2.VideoCapture(0)
 
 def update():
     global userX
     global userY
+    global colors
+    global currentColor
     ret, frame = cap.read()
     
     # get grayscale frame from capture
@@ -47,9 +53,20 @@ def update():
         roi_color = frame[y:y+h, x:x+w]
         # detect eyes in colored face reigon
         eyes = eye_cascade.detectMultiScale(roi_gray)
+        
+        try:
+            eyeOne = eyes[0]
+            #print("Eye 1 X:", eyeOne[0])
+            #print("Eye 1 Y:", eyeOne[1])
+        except Exception:
+            print("No eyes found in face")
+        
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                             # gets 2 rows in eyes (limit to only two eyes)
         for (ex,ey,ew,eh) in eyes[:2]:
+            
+            if (ey - eyeOne[1]) < -10 or (ey - eyeOne[1]) > 10:
+                continue
             
             # draw rectange around eye detection area
             cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
@@ -57,6 +74,11 @@ def update():
             
             # get center of eyes at detected (x + w/2, y + h/2)
             e_center = (int(ex + ew/2), int(ey + eh/2))
+            
+            #print("Eye Center X", e_center[0])
+            #print("Eye Center Y", e_center[1])
+            # Eye center X (L - 70, R - 160)
+            # Eye center Y (B - 100)
             
             # draw circle around eye
             #eye_circle = cv2.circle(roi_color,e_center,15,(0,255,0),2)
@@ -86,18 +108,37 @@ def update():
                 
                 # place dot where pupil is
                 p_center = (int(x1 + w1/2), int(y1 + h1/2))
+                p_center_face = (int((x1 + w1/2) + ex), int((y1 + h1/2) + ey))
+
                 
                 cv2.circle(eye_roi_color, p_center, 3, (0, 0, 255),-1)
                 
                 
                 # draw a line from center to center to visualize direction...
                 # not really so great right now, probably need to compare to p_center to something else
-                #print('e center: ' + str(e_center))
-                #print('p center: ' + str(p_center))
+                #print('e centerX: ' + str(e_center[0]))
+                #print('e centerY: ' + str(e_center[1]))
+                #print('p centerX: ' + str(p_center_face[0]))
+                #print('p centerY: ' + str(p_center_face[1]))
                 
                 
+                if p_center_face[0] > e_center[0] and (userX > 0):
+                    userX -= 1
+                elif p_center_face[0] < e_center[0] and (userX < 575):
+                    userX += 1
+                    
+                    
+                if (p_center_face[1] > e_center[1]) and (userY < 575):
+                    userY += 1
+                elif p_center_face[1] < e_center[1] and (userY > 0):
+                    userY -= 1
+                
+                
+                
+                
+                '''
                 # Range between 60 - 150
-                ex = int(e_center[0] / 90)
+                ex = int(e_center[1] / 90)
                 
                 # Range between 80 - 110
                 ey = int(e_center[1] / 30)
@@ -110,12 +151,12 @@ def update():
                 
                 # Directions the eye is looking
                 pDir = ((px-ex),(py-ey))        
-                print(pDir)
+                #print(pDir)
                 
                 cv2.line(frame, e_center, p_center, (0, 255, 0), 2)
             
                 if pDir[0] <= 0:
-                    userX -= 2
+                    
                 elif pDir[0] >= 0:
                     userX += 2
                     
@@ -123,20 +164,35 @@ def update():
                     userY -= 2
                 elif pDir[1] >= 0:
                     userY += 2
+                '''
                 
-                canvas.create_rectangle(userX,userY,userX+50,userY+50,fill="black")
                 
-            
+                canvas.create_rectangle(userX,userY,userX+25,userY+25,fill=colors[currentColor])
+                colorChange()
+        
             #rel = ((ex-px),(ey-py))
             
             #print(rel)
             
-            
+        #print("________________")   
     cv2.imshow('Eye Tracking', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         main.destroy()
         return
-    main.after(10, update)
+    main.after(17, update) # (16.67) Got this number from how many miliseconds a frame lasts in 60fps
+    
+
+# For when you implement blink detection, something to do after a certain amount of time
+# Everything in changing the colors themselves has already been changed and tested
+def colorChange():
+    global colors
+    global currentColor
+    
+    currentColor += 1
+    
+    if currentColor == len(colors):
+        currentColor = 0
+    
     
 update()
 main.mainloop()
